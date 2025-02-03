@@ -39,17 +39,18 @@ include scripts/Kbuild.include
 # For backward compatibility check that these variables do not change
 save-cflags := $(CFLAGS)
 
-# === Новое ===
-# Удаляем неподдерживаемые оптимизационные флаги для clang
+# === Фильтруем флаги сразу после загрузки переменной CFLAGS ===
+# Удаляем неподдерживаемые оптимизационные флаги, которые приводят к ошибкам в clang
 CFLAGS := $(filter-out -fipa-pta -fno-fat-lto-objects -fuse-linker-plugin -fwhole-program, $(CFLAGS))
-# =============
+ccflags-y := $(filter-out -fipa-pta -fno-fat-lto-objects -fuse-linker-plugin -fwhole-program, $(ccflags-y))
+# ================================================================
 
 # The filename Kbuild has precedence over Makefile
 kbuild-dir := $(if $(filter /%,$(src)),$(src),$(srctree)/$(src))
 kbuild-file := $(if $(wildcard $(kbuild-dir)/Kbuild),$(kbuild-dir)/Kbuild,$(kbuild-dir)/Makefile)
 include $(kbuild-file)
 
-# If the save-* variables changed error out
+# Если переменные, сохранённые в save-cflags, изменились — выдаём ошибку.
 ifeq ($(KBUILD_NOPEDANTIC),)
         ifneq ("$(save-cflags)","$(CFLAGS)")
                 $(error CFLAGS was changed in "$(kbuild-file)". Fix it to use ccflags-y)
@@ -57,6 +58,11 @@ ifeq ($(KBUILD_NOPEDANTIC),)
 endif
 
 include scripts/Makefile.lib
+
+# Можно повторно отфильтровать CFLAGS после включения Makefile.lib,
+# если там могли быть добавлены неподдерживаемые флаги.
+CFLAGS := $(filter-out -fipa-pta -fno-fat-lto-objects -fuse-linker-plugin -fwhole-program, $(CFLAGS))
+ccflags-y := $(filter-out -fipa-pta -fno-fat-lto-objects -fuse-linker-plugin -fwhole-program, $(ccflags-y))
 
 ifdef host-progs
 ifneq ($(hostprogs-y),$(host-progs))
