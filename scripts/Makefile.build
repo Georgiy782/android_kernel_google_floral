@@ -39,6 +39,11 @@ include scripts/Kbuild.include
 # For backward compatibility check that these variables do not change
 save-cflags := $(CFLAGS)
 
+# === Новое ===
+# Удаляем неподдерживаемые оптимизационные флаги для clang
+CFLAGS := $(filter-out -fipa-pta -fno-fat-lto-objects -fuse-linker-plugin -fwhole-program, $(CFLAGS))
+# =============
+
 # The filename Kbuild has precedence over Makefile
 kbuild-dir := $(if $(filter /%,$(src)),$(src),$(srctree)/$(src))
 kbuild-file := $(if $(wildcard $(kbuild-dir)/Kbuild),$(kbuild-dir)/Kbuild,$(kbuild-dir)/Makefile)
